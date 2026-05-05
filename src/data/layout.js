@@ -1,6 +1,6 @@
 export const TILE_IDS = ['date', 'clock'];
 
-export const DEFAULT_LAYOUT = { dir: 'h', ratio: 0.5, a: 'date', b: 'clock' };
+export const DEFAULT_LAYOUT = { dir: 'v', ratio: 0.5, a: 'date', b: 'clock' };
 
 export function removeLeaf(node, id) {
   if (typeof node === 'string') return node === id ? null : node;
@@ -24,7 +24,7 @@ export function insertLeaf(node, targetId, newId, side) {
 export function moveTile(tree, fromId, toId, side) {
   if (fromId === toId) return tree;
   const removed = removeLeaf(tree, fromId);
-  if (!removed || typeof removed === 'string') return tree;
+  if (!removed) return tree;
   return insertLeaf(removed, toId, fromId, side);
 }
 
