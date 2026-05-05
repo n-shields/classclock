@@ -21,7 +21,7 @@ function doExport() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `classboard-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `classclock-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -38,20 +38,30 @@ export default function PeriodBar({
   autoMode, onAutoModeChange,
   currentTheme, onThemeChange,
   onImport,
-  onOpenSeatingChart,
 }) {
-  const [editorOpen,    setEditorOpen]    = useState(false);
-  const [visible,       setVisible]       = useState(false);
-  const [linkCopied,    setLinkCopied]    = useState(false);
-  const [isFullscreen,  setIsFullscreen]  = useState(false);
-  const fileRef   = useRef(null);
-  const hideTimer = useRef(null);
+  const [editorOpen,   setEditorOpen]   = useState(false);
+  const [menuOpen,     setMenuOpen]     = useState(false);
+  const [linkCopied,   setLinkCopied]   = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fileRef  = useRef(null);
+  const menuRef  = useRef(null);
+  const btnRef   = useRef(null);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current?.contains(e.target) || btnRef.current?.contains(e.target)) return;
+      setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -62,21 +72,18 @@ export default function PeriodBar({
     try {
       const encoded = encodeData(collectData());
       const url = new URL(window.location.href);
-      url.searchParams.set('s', encoded);
+      url.searchParams.set("s", encoded);
       navigator.clipboard.writeText(url.toString()).then(() => {
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2500);
       });
     } catch (e) {
-      alert('Could not copy link: ' + e.message);
+      alert("Could not copy link: " + e.message);
     }
   };
 
   const periods       = schedules[scheduleType] || [];
   const scheduleNames = Object.keys(schedules);
-
-  const show = () => { clearTimeout(hideTimer.current); setVisible(true); };
-  const scheduleHide = () => { hideTimer.current = setTimeout(() => setVisible(false), 300); };
 
   const handleImportFile = (e) => {
     const file = e.target.files[0];
@@ -100,80 +107,88 @@ export default function PeriodBar({
 
   return (
     <>
-      {/* Invisible hover zone at very top of screen */}
-      <div className="toolbar-trigger" onMouseEnter={show} onMouseLeave={scheduleHide} />
+      {/* Floating menu button */}
+      <button
+        ref={btnRef}
+        className={`pb-menu-btn ${menuOpen ? "pb-menu-btn--open" : ""}`}
+        onClick={() => setMenuOpen(o => !o)}
+        title="Menu"
+      >☰</button>
 
-      <div
-        className={`period-toolbar${visible ? " period-toolbar--visible" : ""}`}
-        onMouseEnter={show}
-        onMouseLeave={scheduleHide}
-      >
-        {/* Schedule selector */}
-        <select
-          className="tb-select"
-          value={scheduleType}
-          onChange={e => onScheduleTypeChange(e.target.value)}
-        >
-          {scheduleNames.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+      {/* Popup panel */}
+      {menuOpen && (
+        <div className="pb-menu" ref={menuRef}>
 
-        <button
-          className={`btn btn-sm tb-btn ${autoMode ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => onAutoModeChange(!autoMode)}
-          title="Auto-detect period from time"
-        >Auto</button>
+          <div className="pb-section">
+            <div className="pb-section-label">Schedule</div>
+            <div className="pb-row">
+              <select
+                className="tb-select"
+                value={scheduleType}
+                onChange={e => onScheduleTypeChange(e.target.value)}
+              >
+                {scheduleNames.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <button
+                className={`btn btn-sm ${autoMode ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => onAutoModeChange(!autoMode)}
+                title="Auto-detect period from time"
+              >Auto</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditorOpen(true)}>Edit</button>
+            </div>
+          </div>
 
-        <button className="btn btn-ghost btn-sm tb-btn" onClick={() => setEditorOpen(true)}>Edit</button>
+          <div className="pb-section">
+            <div className="pb-section-label">Period</div>
+            <div className="pb-periods">
+              {periods.map((p, i) => {
+                const isActive = i === currentPeriodIndex;
+                const isNext   = !isActive && autoMode && currentPeriodIndex === -1 && i === nextPeriodIndex;
+                return (
+                  <button
+                    key={p.id}
+                    className={`btn btn-sm period-btn ${isActive ? "period-btn-active" : isNext ? "period-btn-next" : "btn-ghost"}`}
+                    onClick={() => { onPeriodSelect(i); setMenuOpen(false); }}
+                    title={`${p.start}–${p.end}`}
+                  >{p.label}</button>
+                );
+              })}
+            </div>
+          </div>
 
-        <div className="tb-divider" />
+          <div className="pb-section">
+            <div className="pb-section-label">Theme</div>
+            <div className="pb-themes">
+              {THEME_KEYS.map(key => (
+                <button
+                  key={key}
+                  className={`tb-theme-dot ${currentTheme === key ? "tb-theme-dot--active" : ""}`}
+                  style={{ background: THEMES[key]?.swatch }}
+                  onClick={() => onThemeChange(key)}
+                  title={THEMES[key]?.name}
+                />
+              ))}
+            </div>
+          </div>
 
-        {/* Period buttons */}
-        {periods.map((p, i) => {
-          const isActive = i === currentPeriodIndex;
-          const isNext   = !isActive && autoMode && currentPeriodIndex === -1 && i === nextPeriodIndex;
-          return (
+          <div className="pb-section pb-actions">
+            <button className="btn btn-ghost btn-sm" onClick={doExport} title="Export data">↓ Export</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current.click()} title="Import data">↑ Import</button>
             <button
-              key={p.id}
-              className={`btn btn-sm period-btn ${isActive ? "period-btn-active" : isNext ? "period-btn-next" : "btn-ghost"}`}
-              onClick={() => onPeriodSelect(i)}
-              title={`${p.start}–${p.end}`}
-            >
-              {p.label}
-            </button>
-          );
-        })}
+              className={`btn btn-sm ${linkCopied ? "btn-primary" : "btn-ghost"}`}
+              onClick={doShareLink}
+            >{linkCopied ? "✓ Copied" : "↗ Share"}</button>
+            <button
+              className={`btn btn-sm ${isFullscreen ? "btn-primary" : "btn-ghost"}`}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >⛶</button>
+          </div>
 
-        <div className="tb-divider" />
+        </div>
+      )}
 
-        {/* Theme picker — click dot to cycle */}
-        <button
-          className="tb-theme-dot"
-          style={{ background: THEMES[currentTheme]?.swatch }}
-          onClick={() => onThemeChange(THEME_KEYS[(THEME_KEYS.indexOf(currentTheme) + 1) % THEME_KEYS.length])}
-          title={`Theme: ${THEMES[currentTheme]?.name} (click to cycle)`}
-        />
-
-        {/* Seating chart */}
-        {onOpenSeatingChart && (
-          <button className="btn btn-ghost btn-sm tb-btn" onClick={onOpenSeatingChart} title="Open seating chart">⊞ Seats</button>
-        )}
-
-        {/* Import / export / share — pinned right */}
-        <button className="btn btn-ghost btn-sm tb-btn ei-btn" style={{ marginLeft: "auto" }} onClick={doExport} title="Export all data">↓ Export</button>
-        <button className="btn btn-ghost btn-sm tb-btn ei-btn" onClick={() => fileRef.current.click()} title="Import data">↑ Import</button>
-        <button
-          className={`btn btn-sm tb-btn ei-btn ${linkCopied ? "btn-primary" : "btn-ghost"}`}
-          onClick={doShareLink}
-          title="Copy shareable link with all settings encoded"
-        >{linkCopied ? "✓ Copied" : "↗ Share"}</button>
-        <button
-          className={`btn btn-sm tb-btn ${isFullscreen ? "btn-primary" : "btn-ghost"}`}
-          onClick={toggleFullscreen}
-          title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-          style={{ fontSize: "1rem", padding: "0 8px" }}
-        >⛶</button>
-        <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleImportFile} />
-      </div>
+      <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleImportFile} />
 
       {editorOpen && (
         <ScheduleEditor

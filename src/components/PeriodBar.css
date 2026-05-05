@@ -1,90 +1,106 @@
-/* ── Hover trigger zone ── */
-.toolbar-trigger {
+/* ── Floating menu button ── */
+.pb-menu-btn {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 200;
-}
-
-/* ── Top toolbar ── */
-.period-toolbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 199;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 1rem;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  background: var(--surface2);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-110%);
-  opacity: 0;
-  transition: transform 0.2s ease, opacity 0.15s ease;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.35;
+  transition: opacity 0.15s, color 0.15s;
 }
 
-.period-toolbar--visible {
-  transform: translateY(0);
+.pb-menu-btn:hover,
+.pb-menu-btn--open {
   opacity: 1;
+  color: var(--text);
 }
 
-/* ── Toolbar controls ── */
-.tb-btn {
-  flex-shrink: 0;
+/* ── Popup panel ── */
+.pb-menu {
+  position: fixed;
+  top: 52px;
+  right: 10px;
+  z-index: 199;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 220px;
+  max-width: min(340px, calc(100vw - 20px));
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
 }
 
+.pb-menu::-webkit-scrollbar { display: none; }
+
+/* ── Sections ── */
+.pb-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.pb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.pb-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.pb-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Shared controls ── */
 .tb-select {
   padding: 4px 6px;
   font-size: 0.78rem;
   cursor: pointer;
-  max-width: 120px;
-  flex-shrink: 0;
-}
-
-.tb-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-  flex-shrink: 0;
-  margin: 0 2px;
-}
-
-/* Theme dot button */
-.tb-theme-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  flex-shrink: 0;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.tb-theme-dot:hover {
-  transform: scale(1.25);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-}
-
-/* Import/export */
-.ei-btn {
-  font-size: 0.8rem;
-  padding: 3px 7px;
+  flex: 1;
+  min-width: 80px;
 }
 
 /* ── Period buttons ── */
 .period-btn {
-  background: var(--surface);
+  background: var(--surface2);
   color: var(--text-dim);
   border: 1px solid var(--border);
   min-width: 42px;
-  flex-shrink: 0;
 }
 
 .period-btn-active {
@@ -97,5 +113,28 @@
 .period-btn-next {
   border-color: var(--accent) !important;
   color: var(--accent) !important;
+  opacity: 1 !important;
+}
+
+/* ── Theme dots ── */
+.tb-theme-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.tb-theme-dot:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.tb-theme-dot--active {
+  border-color: var(--text) !important;
+  transform: scale(1.15);
   opacity: 1 !important;
 }
