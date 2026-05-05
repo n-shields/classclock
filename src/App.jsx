@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DateWidget from "./components/DateWidget";
 import ClockWidget from "./components/ClockWidget";
 import PeriodBar from "./components/PeriodBar";
+import TileLayout from "./components/TileLayout";
 import { loadSchedules, saveSchedules, loadScheduleDays, saveScheduleDays, getScheduleForToday, detectCurrentPeriod, detectNextPeriod } from "./data/schedules";
+import { loadLayout, saveLayout } from "./data/layout";
 import { applyTheme } from "./data/themes";
 import "./App.css";
+
+const TILE_NAMES = { date: "Clock", clock: "Timer" };
 
 function loadScheduleType() {
   return localStorage.getItem("classclock_schedule_type") || "Regular";
@@ -26,6 +30,7 @@ export default function App() {
   const [nextPeriodIndex,    setNextPeriodIndex]    = useState(-1);
   const [autoMode, setAutoMode]         = useState(true);
   const [globalTheme, setGlobalTheme]   = useState(loadGlobalTheme);
+  const [layout, setLayout]             = useState(loadLayout);
 
   const periods       = schedules[scheduleType] || [];
   const currentPeriod = currentPeriodIndex >= 0 ? periods[currentPeriodIndex] : null;
@@ -69,6 +74,15 @@ export default function App() {
     }
   }, [scheduleType]); // eslint-disable-line
 
+  const handleLayoutChange = useCallback((updater) => {
+    if (typeof updater === "function") {
+      setLayout(prev => { const next = updater(prev); saveLayout(next); return next; });
+    } else {
+      setLayout(updater);
+      saveLayout(updater);
+    }
+  }, []);
+
   const handleThemeChange = (theme) => {
     applyTheme(theme);
     setGlobalTheme(theme);
@@ -79,6 +93,11 @@ export default function App() {
     if (type === scheduleType) return;
     setScheduleType(type);
     localStorage.setItem("classclock_schedule_type", type);
+  };
+
+  const tiles = {
+    date:  <DateWidget />,
+    clock: <ClockWidget currentPeriod={currentPeriod} nextPeriod={nextPeriod} collapsed={false} onToggle={() => {}} />,
   };
 
   return (
@@ -98,15 +117,14 @@ export default function App() {
         currentTheme={globalTheme}  onThemeChange={handleThemeChange}
         onImport={() => window.location.reload()}
       />
-      <div className="clock-layout">
-        <DateWidget />
-        <ClockWidget
-          currentPeriod={currentPeriod}
-          nextPeriod={nextPeriod}
-          collapsed={false}
-          onToggle={() => {}}
-        />
-      </div>
+      <TileLayout
+        layout={layout}
+        onLayoutChange={handleLayoutChange}
+        tiles={tiles}
+        isCollapsed={() => false}
+        onToggle={() => {}}
+        tileNames={TILE_NAMES}
+      />
     </div>
   );
 }

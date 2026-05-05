@@ -132,15 +132,15 @@ export default function DateWidget() {
       {settingsOpen && (
         <div className="date-settings-panel" ref={settingsPanelRef}>
           {[
-            { label: "Time",  key: "time",  step: 0.5, min: 1,   max: 10  },
-            { label: "Day",   key: "day",   step: 0.1, min: 0.4, max: 3   },
-            { label: "Date",  key: "date",  step: 0.15, min: 0.4, max: 3  },
+            { label: "Time",  key: "time",  step: 0.5,  min: 0.5, max: 10 },
+            { label: "Day",   key: "day",   step: 0.25, min: 0.5, max: 10 },
+            { label: "Date",  key: "date",  step: 0.25, min: 0.5, max: 10 },
           ].map(({ label, key, step, min, max }) => (
             <div key={key} className="date-settings-row">
               <span className="date-settings-label">{label}</span>
               <div className="date-settings-group">
                 <button className="btn btn-ghost btn-sm" onClick={() => adjustFont(key, -step, min, max)}>A−</button>
-                <span className="date-settings-size">{fontSizes[key].toFixed(key === "time" ? 1 : 2)}</span>
+                <span className="date-settings-size">{fontSizes[key].toFixed(1)}</span>
                 <button className="btn btn-ghost btn-sm" onClick={() => adjustFont(key, +step, min, max)}>A+</button>
               </div>
             </div>

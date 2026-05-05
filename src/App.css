@@ -4,16 +4,3 @@
   height: 100vh;
   overflow: hidden;
 }
-
-.clock-layout {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 12px;
-  min-height: 0;
-}
-
-.clock-layout > * {
-  min-height: 0;
-}
